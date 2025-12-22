@@ -9,38 +9,50 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 group border border-slate-100">
-      <div className="relative aspect-[3/4] overflow-hidden">
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 group border border-slate-100 flex flex-col h-full">
+      <div className="relative aspect-[3/4] overflow-hidden cursor-pointer">
+        {/* Enhanced Hover Effect: Zoom + Subtle Pan + Rotation */}
         <img 
           src={product.image} 
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-all duration-[1.5s] ease-in-out group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-1"
         />
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+        
+        {/* Soft overlay gradient on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center gap-4">
           <button 
             onClick={() => onAddToCart(product)}
-            className="bg-white text-slate-900 p-3 rounded-full hover:bg-teal-900 hover:text-white transition-colors transform translate-y-4 group-hover:translate-y-0 duration-500"
+            className="bg-white text-slate-900 p-4 rounded-full hover:bg-amber-600 hover:text-white transition-all transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 duration-500 shadow-2xl"
+            aria-label="إضافة إلى السلة"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
           </button>
         </div>
-        <span className="absolute top-4 right-4 bg-slate-900/80 text-white px-3 py-1 text-xs rounded backdrop-blur-sm">
+        
+        <span className="absolute top-4 right-4 bg-white/95 text-slate-900 font-black px-3 py-1.5 text-[10px] uppercase tracking-widest rounded-xl backdrop-blur-md shadow-lg border border-white/20">
           {product.category}
         </span>
       </div>
       
-      <div className="p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-1">{product.name}</h3>
-        <p className="text-slate-500 text-sm line-clamp-2 mb-4 h-10">
+      <div className="p-6 flex flex-col flex-grow">
+        <h3 className="text-lg font-black text-slate-900 mb-1 group-hover:text-amber-600 transition-colors duration-300">
+          {product.name}
+        </h3>
+        <p className="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-4 h-10 opacity-80">
           {product.description}
         </p>
-        <div className="flex items-center justify-between">
-          <span className="text-amber-600 font-bold text-xl">{product.price} ج.م</span>
+        <div className="mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
+          <div className="flex flex-col">
+            <span className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-0.5">السعر الحصري</span>
+            <span className="text-amber-600 font-black text-xl">{product.price} <span className="text-xs">ج.م</span></span>
+          </div>
           <button 
             onClick={() => onAddToCart(product)}
-            className="text-slate-900 font-semibold hover:text-teal-900 text-sm transition-colors"
+            className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-amber-600 transition-all active:scale-95 shadow-lg shadow-slate-200"
           >
-            Add to Bag
+            أضف للحقيبة
           </button>
         </div>
       </div>
