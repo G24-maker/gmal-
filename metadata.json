@@ -1,0 +1,7 @@
+{
+  "name": "GAMAL Men's Fashion",
+  "description": "A luxury men's clothing store with an integrated admin panel for easy product management without coding.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
