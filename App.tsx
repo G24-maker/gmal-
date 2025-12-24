@@ -7,6 +7,7 @@ import ProductGrid from './components/ProductGrid';
 import AdminPanel from './components/AdminPanel';
 import Cart from './components/Cart';
 import AIChatbot from './components/AIChatbot';
+import QuickViewModal from './components/QuickViewModal';
 
 const INITIAL_PRODUCTS: Product[] = [
   {
@@ -26,6 +27,15 @@ const INITIAL_PRODUCTS: Product[] = [
     category: 'قمصان',
     image: 'https://images.unsplash.com/photo-1620012253295-c05718565d6d?q=80&w=800&auto=format&fit=crop',
     description: 'قميص مريح مصنوع من أجود أنواع القطن المصري.'
+  },
+  {
+    id: '4',
+    sku: 'GML-MS-004',
+    name: 'سبحة كهرمان ملكي أصلي',
+    price: 2500,
+    category: 'مسابح',
+    image: 'https://images.unsplash.com/photo-1590649819260-984ba5432021?q=80&w=800&auto=format&fit=crop',
+    description: 'سبحة فاخرة من الكهرمان الطبيعي برائحة زكية وتصميم يدوي متقن للرجل الأنيق.'
   },
   {
     id: '3',
@@ -58,6 +68,7 @@ const App: React.FC = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     localStorage.setItem('gamal_products', JSON.stringify(products));
@@ -150,6 +161,7 @@ const App: React.FC = () => {
               <ProductGrid 
                 products={filteredProducts} 
                 onAddToCart={addToCart} 
+                onQuickView={setQuickViewProduct}
               />
             </div>
           </>
@@ -200,6 +212,12 @@ const App: React.FC = () => {
         items={cart}
         onUpdateQuantity={updateCartQuantity}
         onRemove={removeFromCart}
+      />
+
+      <QuickViewModal 
+        product={quickViewProduct} 
+        onClose={() => setQuickViewProduct(null)} 
+        onAddToCart={addToCart} 
       />
 
       <AIChatbot storeConfig={storeConfig} />

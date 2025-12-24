@@ -16,6 +16,13 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
+const LoadingSpinner = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
   products, 
   categories, 
@@ -37,9 +44,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [category, setCategory] = useState<string>(categories[0] || '');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const [productImgMethod, setProductImgMethod] = useState<'url' | 'file'>('url');
   
   // Settings Form State
   const [config, setConfig] = useState<StoreConfig>(storeConfig);
+  const [configImgMethod, setConfigImgMethod] = useState<'url' | 'file'>('url');
 
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
@@ -65,7 +74,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleAddOrUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !price || !image) {
-      alert('يرجى ملء الاسم والسعر ورابط الصورة على الأقل.');
+      alert('يرجى ملء الاسم والسعر وصورة المنتج على الأقل.');
       return;
     }
     
@@ -106,25 +115,35 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleGenerateImg = async () => {
     if (!name) return alert("أدخل اسم المنتج لوصفه بالذكاء الاصطناعي");
     setIsGeneratingImg(true);
-    const result = await generateProductImage(name, imgSize);
-    if (result) setImage(result);
-    setIsGeneratingImg(false);
+    setProductImgMethod('url');
+    try {
+      const result = await generateProductImage(name, imgSize);
+      if (result) setImage(result);
+    } finally {
+      setIsGeneratingImg(false);
+    }
   };
 
   const handleAnimate = async () => {
     if (!image) return alert("اختر صورة أولاً لتحريكها");
     setIsAnimating(true);
-    const videoUrl = await animateProduct(image);
-    if (videoUrl) window.open(videoUrl, '_blank');
-    setIsAnimating(false);
+    try {
+      const videoUrl = await animateProduct(image);
+      if (videoUrl) window.open(videoUrl, '_blank');
+    } finally {
+      setIsAnimating(false);
+    }
   };
 
   const handleGenerateDescription = async () => {
     if (!name) return alert('أدخل اسم المنتج أولاً');
     setIsGeneratingDesc(true);
-    const desc = await generateDescription(name, category);
-    setDescription(desc);
-    setIsGeneratingDesc(false);
+    try {
+      const desc = await generateDescription(name, category);
+      setDescription(desc);
+    } finally {
+      setIsGeneratingDesc(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,36 +247,117 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none" required />
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-bold text-slate-500">صورة المنتج</label>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex p-1 bg-slate-200 rounded-lg">
+                      <button 
+                        type="button" 
+                        onClick={() => setProductImgMethod('url')} 
+                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${productImgMethod === 'url' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500'}`}
+                      >
+                        رابط URL
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setProductImgMethod('file')} 
+                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${productImgMethod === 'file' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500'}`}
+                      >
+                        رفع ملف
+                      </button>
+                    </div>
                     <div className="flex gap-2">
-                      <select value={imgSize} onChange={(e) => setImgSize(e.target.value as any)} className="text-[10px] bg-slate-100 rounded px-2 cursor-pointer outline-none">
+                      <select value={imgSize} onChange={(e) => setImgSize(e.target.value as any)} className="text-[10px] bg-white border border-slate-200 rounded px-2 cursor-pointer outline-none">
                         <option value="1K">1K</option>
                         <option value="2K">2K</option>
                         <option value="4K">4K</option>
                       </select>
-                      <button type="button" onClick={handleGenerateImg} disabled={isGeneratingImg} className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded hover:bg-amber-100 transition-colors">
-                        {isGeneratingImg ? 'جاري التوليد...' : 'توليد بالذكاء ✨'}
+                      <button 
+                        type="button" 
+                        onClick={handleGenerateImg} 
+                        disabled={isGeneratingImg} 
+                        className={`flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded transition-all border ${
+                          isGeneratingImg 
+                            ? 'bg-amber-100 text-amber-400 border-amber-200 cursor-not-allowed' 
+                            : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100'
+                        }`}
+                      >
+                        {isGeneratingImg ? (
+                          <>
+                            <LoadingSpinner className="w-3 h-3" />
+                            جاري التوليد...
+                          </>
+                        ) : (
+                          <>ذكاء ✨</>
+                        )}
                       </button>
                     </div>
                   </div>
-                  <input type="text" value={image} onChange={(e) => setImage(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-xs mb-3" placeholder="رابط الصورة..." />
-                  <div className="flex gap-2">
-                    <label className="flex-grow flex items-center justify-center h-12 border-2 border-slate-200 border-dashed rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100 text-xs font-bold transition-colors">
-                      رفع صورة
+
+                  {productImgMethod === 'url' ? (
+                    <div className="space-y-3">
+                      <input 
+                        type="text" 
+                        value={image} 
+                        onChange={(e) => setImage(e.target.value)} 
+                        className="w-full p-4 bg-white border border-slate-200 rounded-xl outline-none text-xs focus:ring-1 focus:ring-amber-500" 
+                        placeholder="أدخل رابط الصورة (HTTPS)..." 
+                      />
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 transition-all overflow-hidden relative">
+                      {image && image.startsWith('data:') ? (
+                        <img src={image} className="absolute inset-0 w-full h-full object-cover opacity-20" alt="Uploaded" />
+                      ) : null}
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6 z-10">
+                        <svg className="w-8 h-8 mb-4 text-slate-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        </svg>
+                        <p className="mb-2 text-xs text-slate-500 font-bold">اسحب الصورة أو انقر للرفع</p>
+                      </div>
                       <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                     </label>
-                    <button type="button" onClick={handleAnimate} disabled={isAnimating} className="px-4 h-12 bg-blue-50 text-blue-600 rounded-2xl text-xs font-bold hover:bg-blue-100 transition-colors">
-                      {isAnimating ? 'جاري التحريك...' : 'تحريك (Veo) 🎥'}
-                    </button>
-                  </div>
+                  )}
+                  
+                  {image && (
+                    <div className="mt-4 flex items-center justify-between gap-4">
+                      <div className="flex-grow text-[10px] text-slate-400 truncate dir-ltr">{image}</div>
+                      <button 
+                        type="button" 
+                        onClick={handleAnimate} 
+                        disabled={isAnimating} 
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                          isAnimating 
+                            ? 'bg-blue-100 text-blue-400 border-blue-200 cursor-not-allowed' 
+                            : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
+                        }`}
+                      >
+                        {isAnimating ? (
+                          <>
+                            <LoadingSpinner className="w-3 h-3 text-blue-400" />
+                            جاري التحريك...
+                          </>
+                        ) : (
+                          <>تحريك (Veo) 🎥</>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-xs font-bold text-slate-500">وصف المنتج</label>
-                    <button type="button" onClick={handleGenerateDescription} disabled={isGeneratingDesc} className="text-[10px] font-bold text-amber-600 hover:underline">توليد وصف ✨</button>
+                    <button 
+                      type="button" 
+                      onClick={handleGenerateDescription} 
+                      disabled={isGeneratingDesc} 
+                      className={`flex items-center gap-1 text-[10px] font-bold transition-all ${
+                        isGeneratingDesc ? 'text-amber-300 cursor-not-allowed' : 'text-amber-600 hover:underline'
+                      }`}
+                    >
+                      {isGeneratingDesc && <LoadingSpinner className="w-2 h-2" />}
+                      {isGeneratingDesc ? 'جاري التوليد...' : 'توليد وصف ✨'}
+                    </button>
                   </div>
                   <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl h-24 text-sm resize-none outline-none focus:ring-1 focus:ring-amber-500 transition-all"></textarea>
                 </div>
@@ -302,21 +402,53 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             </h3>
             <form onSubmit={handleUpdateSettings} className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">رابط خلفية المتجر (Hero Background)</label>
-                <div className="space-y-3">
-                  <input 
-                    type="text" 
-                    value={config.backgroundImage} 
-                    onChange={(e) => setConfig({...config, backgroundImage: e.target.value})} 
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 text-xs" 
-                    placeholder="https://..." 
-                  />
-                  <label className="flex items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-2xl cursor-pointer bg-slate-50 hover:bg-amber-50 transition-colors">
-                    <div className="text-center">
-                      <p className="text-xs text-slate-500 font-bold">رفع صورة خلفية جديدة</p>
+                <div className="flex justify-between items-center mb-4">
+                  <label className="block text-sm font-bold text-slate-700">رابط خلفية المتجر (Hero Background)</label>
+                  <div className="flex p-1 bg-slate-100 rounded-lg">
+                    <button 
+                      type="button" 
+                      onClick={() => setConfigImgMethod('url')} 
+                      className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${configImgMethod === 'url' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500'}`}
+                    >
+                      رابط URL
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setConfigImgMethod('file')} 
+                      className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${configImgMethod === 'file' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500'}`}
+                    >
+                      رفع ملف
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {configImgMethod === 'url' ? (
+                    <input 
+                      type="text" 
+                      value={config.backgroundImage} 
+                      onChange={(e) => setConfig({...config, backgroundImage: e.target.value})} 
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 text-xs" 
+                      placeholder="أدخل رابط خلفية المتجر..." 
+                    />
+                  ) : (
+                    <label className="flex items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-2xl cursor-pointer bg-slate-50 hover:bg-amber-50 transition-colors relative overflow-hidden">
+                      {config.backgroundImage && config.backgroundImage.startsWith('data:') && (
+                        <img src={config.backgroundImage} className="absolute inset-0 w-full h-full object-cover opacity-10" alt="Preview" />
+                      )}
+                      <div className="text-center z-10">
+                        <p className="text-xs text-slate-500 font-bold">رفع صورة خلفية جديدة</p>
+                      </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleConfigImageUpload} />
+                    </label>
+                  )}
+                  {config.backgroundImage && (
+                    <div className="rounded-2xl overflow-hidden h-40 border border-slate-200 shadow-inner relative group">
+                      <img src={config.backgroundImage} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" alt="Preview" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                      <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-slate-900 border border-white/50">معاينة الواجهة</div>
                     </div>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleConfigImageUpload} />
-                  </label>
+                  )}
                 </div>
               </div>
 

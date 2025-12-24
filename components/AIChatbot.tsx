@@ -13,9 +13,45 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ storeConfig }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(scrollToBottom, [messages, isTyping]);
+
+  const decodeAudioData = async (data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number): Promise<AudioBuffer> => {
+    const dataInt16 = new Int16Array(data.buffer);
+    const frameCount = dataInt16.length / numChannels;
+    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+    for (let channel = 0; channel < numChannels; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      for (let i = 0; i < frameCount; i++) {
+        channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+      }
+    }
+    return buffer;
+  };
+
+  const playAudio = async (audioBytes: Uint8Array) => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
+      const ctx = audioContextRef.current;
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+
+      const audioBuffer = await decodeAudioData(audioBytes, ctx, 24000, 1);
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.start();
+    } catch (error) {
+      console.error("Error playing audio:", error);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -33,9 +69,10 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ storeConfig }) => {
     setMessages(prev => [...prev, { role: 'model', text: response.text, sources: response.sources }]);
     setIsTyping(false);
 
+    // Limit text for TTS to first 200 chars for better latency
     const audioBytes = await textToSpeech(response.text.substring(0, 200));
     if (audioBytes) {
-      // In a real browser context, we'd use the Web Audio API to play these raw bytes.
+      await playAudio(audioBytes);
     }
   };
 

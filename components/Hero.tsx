@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StoreConfig } from '../types';
 
 interface HeroProps {
@@ -7,16 +7,39 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = ({ config }) => {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToCollection = () => {
+    const grid = document.getElementById('product-grid');
+    if (grid) {
+      grid.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Calculate parallax offset - background moves at 40% of scroll speed
+  const parallaxOffset = scrollY * 0.4;
+
   return (
     <section className="relative h-[65vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
-      {/* Background Image managed by Admin Settings */}
+      {/* Background Image with Parallax Effect */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000"
+        className="absolute inset-0 w-full h-[120%] -top-[10%] bg-cover bg-center bg-no-repeat transition-transform duration-75 ease-out"
         style={{ 
           backgroundImage: `url("${config.backgroundImage}")`,
+          transform: `translateY(${parallaxOffset}px) scale(1.05)`,
+          willChange: 'transform'
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-transparent"></div>
       </div>
       
       <div 
@@ -39,8 +62,9 @@ const Hero: React.FC<HeroProps> = ({ config }) => {
           style={{ 
             color: config.heroSubtitleColor,
             fontSize: `${config.heroSubtitleSize}px`,
-            marginRight: config.heroAlignment === 'right' ? '0' : config.heroAlignment === 'center' ? 'auto' : 'auto',
-            marginLeft: config.heroAlignment === 'left' ? '0' : config.heroAlignment === 'center' ? 'auto' : 'auto',
+            marginRight: config.heroAlignment === 'right' ? '0' : 'auto',
+            marginLeft: config.heroAlignment === 'left' ? '0' : 'auto',
+            display: 'inline-block'
           }}
         >
           {config.heroSubtitle}
@@ -49,7 +73,10 @@ const Hero: React.FC<HeroProps> = ({ config }) => {
           config.heroAlignment === 'center' ? 'justify-center' : 
           config.heroAlignment === 'left' ? 'justify-start' : 'justify-end'
         }`}>
-          <button className="bg-amber-600 hover:bg-amber-700 text-white px-12 py-4 rounded-full text-lg font-black transition-all transform hover:scale-105 shadow-2xl active:scale-95">
+          <button 
+            onClick={scrollToCollection}
+            className="bg-amber-600 hover:bg-amber-700 text-white px-12 py-4 rounded-full text-lg font-black transition-all transform hover:scale-105 shadow-2xl active:scale-95"
+          >
             تصفح المجموعة
           </button>
           <button className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white border border-white/30 px-12 py-4 rounded-full text-lg font-black transition-all">
@@ -58,7 +85,7 @@ const Hero: React.FC<HeroProps> = ({ config }) => {
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer" onClick={scrollToCollection}>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/></svg>
       </div>
     </section>

@@ -5,9 +5,10 @@ import { Product } from '../types';
 interface ProductCardProps {
   product: Product;
   onAddToCart: (p: Product) => void;
+  onQuickView?: (p: Product) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onQuickView }) => {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 group border border-slate-100 flex flex-col h-full">
       <div className="relative aspect-[3/4] overflow-hidden cursor-pointer">
@@ -23,6 +24,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
 
         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center gap-4">
           <button 
+            onClick={() => onQuickView?.(product)}
+            className="bg-white text-slate-900 p-4 rounded-full hover:bg-amber-600 hover:text-white transition-all transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 duration-500 shadow-2xl"
+            aria-label="عرض سريع"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          
+          <button 
             onClick={() => onAddToCart(product)}
             className="bg-white text-slate-900 p-4 rounded-full hover:bg-amber-600 hover:text-white transition-all transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 duration-500 shadow-2xl"
             aria-label="إضافة إلى السلة"
@@ -37,7 +46,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       </div>
       
       <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-lg font-black text-slate-900 mb-1 group-hover:text-amber-600 transition-colors duration-300">
+        <h3 
+          className="text-lg font-black text-slate-900 mb-1 group-hover:text-amber-600 transition-colors duration-300 cursor-pointer"
+          onClick={() => onQuickView?.(product)}
+        >
           {product.name}
         </h3>
         <p className="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-4 h-10 opacity-80">

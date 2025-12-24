@@ -29,6 +29,7 @@ export const DEFAULT_CATEGORIES: string[] = [
   "بدل",
   "قمصان",
   "بناطيل",
+  "مسابح",
   "إكسسوارات",
   "أحذية"
 ];
